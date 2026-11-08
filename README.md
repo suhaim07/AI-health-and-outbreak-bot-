@@ -1,110 +1,105 @@
 # PulseGuard AI — Community Health & Outbreak Alert Bot
 
-An AI-powered health assistant built to help village users, elderly people, and first-time smartphone users get quick, simple health guidance. It provides symptom-based precautions, location-aware seasonal outbreak alerts, and a map of nearby clinics and hospitals — all available in multiple Indian languages.
+An AI-powered health assistant and surveillance system designed to provide accessible, immediate, and simple healthcare guidance. Built specifically with underserved communities, village users, elderly citizens, and first-time smartphone users in mind.
 
-This README summarizes what has been built in this project and how to run it.
-
----
-
-## What This Project Does
-
-- **AI Health Chatbot** — Users describe their symptoms in plain language (with spelling mistakes handled) and receive short, simple, real-world precautions plus advice on when to see a doctor.
-- **Emergency / High-Alert Detection** — Detects serious symptoms (chest pain, breathing trouble, bleeding, unconsciousness, heart attack, severe fever, etc.) and gives immediate life-support steps (call 108/112, CPR guidance, recovery position).
-- **Outbreak Alerts** — Uses the user's location and current season to show a risk level (high / medium / low) for mosquito-borne and respiratory illnesses.
-- **Nearby Facilities Map** — Finds hospitals and clinics within 10 km using OpenStreetMap data and provides directions, call buttons, and emergency numbers.
-- **Nearby Doctor Finder in Chat** — If the user asks for a doctor/clinic "near me", the bot infers the right specialist from the symptoms (e.g. Cardiologist for heart/chest, Pulmonologist for cough/breathing) and finds the closest mapped facility.
-- **Multilingual UI** — Full interface available in **English, Hindi, Kannada, Tamil, and Urdu**.
+It delivers conversational symptom triage, life-saving emergency detection, location-aware seasonal outbreak alerts, and real-time mapping of nearby healthcare facilities — in **English, Hindi, Kannada, Tamil, and Urdu**.
 
 ---
 
-## Tech Stack
-
-**Frontend**
-- React 19 + Vite
-- Tailwind CSS v4
-- Axios
-- Lucide React (icons)
-- Framer Motion, Recharts, React Router (installed dependencies)
-- OpenStreetMap embeds + Overpass API for facilities
-
-**Backend**
-- Python + Flask + Flask-CORS
-- `python-dotenv` for environment configuration
-- Pluggable AI provider: **Groq**, **OpenRouter**, **OpenAI**, or any OpenAI-compatible endpoint
-- Built-in safety guidance fallback when no AI key is configured or the API fails
-
----
-
-## Project Structure
+## 🏗️ Architecture & How It Was Built
 
 ```
-AI-health-and-outbreak-bot-/
-├── index.js                     # placeholder at project root
-├── backend/
-│   ├── app.py                   # Flask API + AI logic + safety rules
-│   ├── requirements.txt         # Python dependencies
-│   ├── .env.example             # sample environment variables
-│   ├── test.py                  # backend test/scratch script
-│   └── logs (.log files)
-└── frontend/
-    ├── index.html
-    ├── package.json
-    ├── vite.config.js
-    └── src/
-        ├── App.jsx              # main app shell, tabs, language selector
-        ├── config.js            # API base URL
-        ├── components/
-        │   ├── Chatbot.jsx      # chat UI, nearby doctor finder
-        │   ├── MapSection.jsx   # nearby hospitals/clinics map
-        │   ├── Dashboard.jsx
-        │   ├── DashboardCards.jsx
-        │   ├── HeroSection.jsx
-        │   ├── Navbar.jsx
-        │   ├── NearbyClinics.jsx
-        │   ├── OutbreakAlert.jsx
-        │   └── ChatbotPanel.jsx
-        ├── data/mockData.js
-        ├── utils/translations.js
-        └── styles/global.css
++-----------------------------------------------------------------------------------+
+|                                 FRONTEND (React 19 + Vite)                         |
+|  - Multilingual UI (EN, HI, KN, TA, UR)  - Chatbot Interface & Quick Symptoms     |
+|  - Seasonal Outbreak Risk Cards          - OpenStreetMap Hospital & Doctor Finder |
++------------------------------------------+----------------------------------------+
+                                           | HTTP / REST (Port 5000)
+                                           v
++-----------------------------------------------------------------------------------+
+|                             BACKEND API (FastAPI / Flask)                         |
+|                                                                                   |
+|  +--------------------+  +----------------------+  +---------------------------+  |
+|  |  FastAPI (main.py) |  | Triage & Safety Core |  | Location & Outbreak Logic |  |
+|  |  - Auto Docs /docs |  | - High Alert Scanner |  | - Season & Region Checker |  |
+|  |  - Async Execution |  | - Spell Normalizer   |  | - 5-Language Copy Table   |  |
+|  |  - CORS Enabled    |  | - Life-Support Rules |  +---------------------------+  |
+|  +--------------------+  +----------+-----------+                                 |
+|                                     |                                             |
+|                                     v                                             |
+|                     +-------------------------------+                             |
+|                     | Multi-Provider AI Connector   |                             |
+|                     | (Groq / OpenRouter / OpenAI)  |                             |
+|                     +---------------+---------------+                             |
+|                                     | (Fall back safely if offline)               |
+|                                     v                                             |
+|                     +-------------------------------+                             |
+|                     | Built-in Clinical Fallback KB |                             |
+|                     +-------------------------------+                             |
++-----------------------------------------------------------------------------------+
 ```
+
+### 1. Frontend Engineering
+- **React 19 & Vite**: Ultra-fast component rendering and hot-module replacement.
+- **Tailwind CSS v4 & Framer Motion**: Responsive, accessible mobile-first interface designed for clarity and high contrast.
+- **Geolocation & Overpass API**:
+  - Automatically requests browser GPS coordinates.
+  - Queries OpenStreetMap via the Overpass API within a 10 km radius for clinics, physicians, and hospitals.
+  - Infers doctor specialties (e.g., Cardiologist for chest pain, Pulmonologist for cough) directly from chat history.
+- **Zero-Barrier Multilingual Support**: Instant switching across 5 languages without reloading.
+
+### 2. Backend API Engineering (FastAPI + Flask)
+- **FastAPI (`backend/main.py`)**: High-performance, modern async API with automated interactive documentation (`/docs` via Swagger UI and `/redoc`).
+- **Flask (`backend/app.py`)**: Lightweight WSGI alternative.
+- **Pydantic Validation**: Strong typing and structured schema generation.
+- **Pluggable AI Integration**:
+  - Auto-detects keys for **Groq** (`gsk_...`), **OpenRouter** (`sk-or-...`), or **OpenAI** (`sk-...`).
+  - Auto-normalizes common phonetic misspellings (e.g., *dengu* -> *dengue*, *maleriya* -> *malaria*).
+  - Enforces strict safety rules (2-sentence structured responses, emergency life-support protocols for collapse/unconsciousness/heart attacks).
+- **Fail-Safe Clinical Fallback Engine**: If the AI provider is offline or rate-limited, the system **never leaves the user hanging**; it immediately serves built-in clinical triage guidance.
 
 ---
 
-## Getting Started
+## 🚀 Quick Start Guide
 
-### 1. Backend
+### 1. Setup Backend (FastAPI)
 
 ```powershell
 cd backend
+
+# Create and activate virtual environment (optional)
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+
+# Install dependencies (includes FastAPI, Uvicorn, and Flask)
 pip install -r requirements.txt
 ```
 
-Create a `.env` file (copy from `.env.example`) and add **one** API key:
-
+#### Configure Environment Variables (`backend/.env`):
+Create or edit `.env` with your API key:
 ```env
-# Any one of these works; provider is auto-detected from the key prefix.
-AI_API_KEY=your_key_here
-# GROQ_API_KEY=...
-# OPENROUTER_API_KEY=...
-# OPENAI_API_KEY=...
-
-# Optional (defaults to openai/gpt-oss-120b)
-AI_MODEL=openai/gpt-oss-120b
+# Groq (recommended free tier) or OpenRouter / OpenAI
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
-Run the server:
-
+#### Run the FastAPI Backend:
 ```powershell
-python app.py
+# Option A: Run directly with Python
+python main.py
+
+# Option B: Run via Uvicorn
+uvicorn main:app --host 127.0.0.1 --port 5000 --reload
 ```
 
-The API runs at `http://127.0.0.1:5000`.
+* 📖 **Interactive Swagger UI**: Visit [http://127.0.0.1:5000/docs](http://127.0.0.1:5000/docs)
+* 📑 **ReDoc Documentation**: Visit [http://127.0.0.1:5000/redoc](http://127.0.0.1:5000/redoc)
 
-> No API key? The backend still works and returns built-in safety guidance instead of AI-generated text.
+*(Note: You can also run the legacy Flask backend anytime with `python app.py` on the same port).*
 
-### 2. Frontend
+---
+
+### 2. Setup Frontend
 
 ```powershell
 cd frontend
@@ -112,54 +107,65 @@ npm install
 npm run dev
 ```
 
-The app runs on the Vite dev server (default `http://localhost:5173`).
-
-Optional: point the frontend at a different backend by creating `frontend/.env`:
-
-```env
-VITE_API_BASE_URL=http://127.0.0.1:5000
-```
+Open your browser at **`http://localhost:5173`**.
 
 ---
 
-## API Endpoints
+## 📡 API Endpoints Reference
 
-| Method | Endpoint          | Purpose |
-|--------|-------------------|---------|
-| GET    | `/health`         | Returns server status, whether AI is configured, provider and model |
-| POST   | `/chat`           | Accepts `{ message, language }` and returns `{ reply }` |
-| POST   | `/outbreak-alert` | Accepts `{ lat, lon, language }` and returns seasonal local risk with `level`, `title`, `message`, `precautions` |
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | API status, metadata, and quick links |
+| `GET` | `/health` | Backend status, active AI provider, and model |
+| `POST` | `/chat` | Chatbot symptom triage and emergency assessment |
+| `POST` | `/outbreak-alert` | Location-based seasonal outbreak risk calculation |
+| `GET` | `/symptoms` | List of mapped symptom clinical rules |
+| `GET` | `/languages` | Supported regional languages |
+| `GET` | `/docs` | Interactive Swagger API documentation |
 
-### Example
+### Example API Request (`/chat`)
 
 ```bash
 curl -X POST http://127.0.0.1:5000/chat \
   -H "Content-Type: application/json" \
-  -d "{\"message\":\"I have high fever and body pain\",\"language\":\"English\"}"
+  -d '{"message": "I have fever and body pain", "language": "English"}'
+```
+
+**Response:**
+```json
+{
+  "reply": "Fever with body pain may happen in viral fever, dengue, or malaria; drink ORS or water, rest, and avoid mosquito bites. Visit a clinic today if fever is high, pain is severe, or weakness is increasing."
+}
 ```
 
 ---
 
-## Safety & AI Behavior (Backend)
+## 🛡️ Safety & Triage Protocols
 
-- **Symptom knowledge base** covering malaria, typhoid, jaundice, dengue, flu/COVID, asthma, heart attack, UTI, chickenpox, fever, cough, headache, stomach issues, body pain, skin, and dental problems.
-- **Spelling normalization** for common mistakes (e.g. `dengu → dengue`, `maleriya → malaria`).
-- **High-alert keyword detection** triggers urgent clinic/emergency advice.
-- **Emergency life-support replies** for death, no breathing, no pulse, unconsciousness, and heart attack scenarios.
-- **Multilingual outbreak copy** for English, Hindi, Kannada, Tamil, and Urdu.
-- **Graceful fallback** to built-in guidance if the AI provider is unavailable.
-
----
-
-## Notes / Limitations
-
-- Outbreak alerts are **seasonal and location-based estimates, not real-time epidemiological data**.
-- Facility data comes from OpenStreetMap/Overpass and may be incomplete in rural areas.
-- The app is **not a substitute for professional medical diagnosis** — it gives precautions and guidance on when to seek care.
-- The root `index.js` is currently empty/unused.
+1. **Life Support Triggers**:
+   - Immediate recognition of cardiac events, unconsciousness, severe respiratory distress, or cessation of breathing.
+   - Bypasses standard advice to supply immediate emergency numbers (**108 / 112**) and actionable CPR/recovery position steps.
+2. **Deterministic Fallback**:
+   - Zero-downtime health guidance guaranteed even without an internet connection to external AI APIs.
+3. **Location Privacy**:
+   - GPS coordinates are processed transiently in the client browser and memory for distance calculation; no patient location data is stored.
 
 ---
 
-## Credits
+## 🧪 Testing the API
 
-Built as an AI health and outbreak alert project focused on accessible healthcare for underserved communities.
+Run the automated test suite against the backend:
+
+```powershell
+cd backend
+python test.py
+```
+
+Expected output:
+```
+[PASS] health: HTTP 200
+[PASS] outbreak-alert: HTTP 200
+[PASS] outbreak-alert-missing-location: HTTP 400
+[PASS] chat: HTTP 200
+[PASS] chat-empty: HTTP 400
+```
