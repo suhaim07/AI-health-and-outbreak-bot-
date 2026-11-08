@@ -1,12 +1,16 @@
 # Environment / secrets
 .env
 .env.*
-!.env.example
 *.env
 !.env.example
+!**/.env.example
 secrets.*
 *.pem
 *.key
+*.cert
+*.crt
+*credential*
+*.json.secret
 
 # Python
 __pycache__/

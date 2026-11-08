@@ -1,46 +1,95 @@
-# Environment / secrets (never push these)
+# ==========================================
+# Secret & Environment Files (NEVER PUSH)
+# ==========================================
 .env
 .env.*
-!.env.example
 *.env
+**/.env
+**/.env.*
 !.env.example
-secrets.*
+!**/.env.example
+
+# Private Keys, Certificates & Tokens
 *.pem
 *.key
-*.p12
+*.cert
+*.crt
 *.pfx
+*.p12
+id_rsa
+id_rsa*
+*.id_rsa
+*.pub
+secrets.*
+*secret*
+*credential*
+*credentials*.json
+serviceAccountKey*.json
+client_secret*.json
 
-# Python
+# ==========================================
+# Python Artifacts & Virtual Environments
+# ==========================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 .venv/
 venv/
 env/
+ENV/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
-# Node
+# ==========================================
+# Node.js & Frontend Artifacts
+# ==========================================
 node_modules/
 dist/
 dist-ssr/
 *.local
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Logs
+# ==========================================
+# Logs & Databases
+# ==========================================
 *.log
 logs/
-
-# OS / editors
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-*.suo
-*.sw?
-
-# Local databases / uploads
 *.sqlite
 *.sqlite3
 *.db
+
+# ==========================================
+# OS & Editor Files
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
