@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Send, Bot, ArrowLeft, MapPin, Navigation, Loader2 } from 'lucide-react';
+import { Send, Bot, ArrowLeft, MapPin, Navigation, Loader2, Trash2 } from 'lucide-react';
 import { translations } from '../utils/translations';
 import { API_BASE_URL } from '../config';
 
@@ -174,15 +174,48 @@ const fetchNearbyDoctors = async (location, specialty) => {
 const Chatbot = ({ onBack, language }) => {
   const t = translations[language] || translations['English'];
   
-  const [messages, setMessages] = useState([]);
+  // Persistent chat messages from localStorage
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pulseguard_chat_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading chat history from localStorage:', e);
+    }
+    return [];
+  });
+
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [doctorLoading, setDoctorLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
-  // Reset chat when language changes
+  // Sync chat messages to localStorage whenever they update
   useEffect(() => {
+    try {
+      localStorage.setItem('pulseguard_chat_history', JSON.stringify(messages));
+    } catch (e) {
+      console.error('Error saving chat history to localStorage:', e);
+    }
+  }, [messages]);
+
+  // Clear chat history
+  const clearChat = () => {
     setMessages([]);
+    try {
+      localStorage.removeItem('pulseguard_chat_history');
+    } catch (e) {
+      console.error('Error clearing chat history:', e);
+    }
+  };
+
+  // Auto-focus input on mount and language change
+  useEffect(() => {
+    inputRef.current?.focus();
   }, [language]);
 
   const scrollToBottom = () => {
@@ -246,14 +279,19 @@ const Chatbot = ({ onBack, language }) => {
   };
 
   const sendMessage = async (text = input) => {
+    if (loading || doctorLoading) return;
     if (!text.trim()) return;
 
     const userMsg = text.trim();
     setMessages(prev => [...prev, { text: userMsg, sender: 'user' }]);
     setInput('');
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
 
     if (isNearbyFacilityRequest(userMsg)) {
       await findNearbyDoctor(userMsg);
+      inputRef.current?.focus();
       return;
     }
 
@@ -285,32 +323,49 @@ const Chatbot = ({ onBack, language }) => {
       }]);
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <div className="bg-white p-4 flex items-center gap-3 shadow-sm sticky top-0 z-10">
-        <button onClick={onBack} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200">
-          <ArrowLeft size={24} />
-        </button>
-        <div className="font-bold text-xl text-slate-800 flex items-center gap-2">
-          <div className="bg-teal-100 p-2 rounded-full text-teal-700">
-            <Bot size={24} />
+    <div className="flex flex-col h-full w-full bg-slate-50">
+      <div className="bg-white px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-sm sticky top-0 z-10 border-b border-slate-100 shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer">
+            <ArrowLeft size={22} />
+          </button>
+          <div className="font-bold text-lg lg:text-xl text-slate-800 flex items-center gap-2">
+            <div className="bg-teal-100 p-2 rounded-full text-teal-700">
+              <Bot size={22} />
+            </div>
+            {t.chat_title}
           </div>
-          {t.chat_title}
         </div>
+
+        {messages.length > 0 && (
+          <button
+            onClick={clearChat}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs lg:text-sm font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition-all cursor-pointer"
+            title="Clear Chat History"
+          >
+            <Trash2 size={16} />
+            <span>Clear Chat</span>
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-10">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4 pb-10">
+        <div className="max-w-4xl mx-auto w-full space-y-4">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] lg:max-w-[70%] p-4 rounded-3xl text-base sm:text-lg ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm'}`}>
+            <div className={`max-w-[85%] lg:max-w-[70%] p-4 lg:p-5 rounded-3xl text-base sm:text-lg ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm'}`}>
               {msg.kind === 'doctor' ? (
                 <div className="space-y-3">
                   <div>
-                    <div className="font-bold">{msg.specialty}</div>
-                    <div>{msg.doctor.name}</div>
+                    <div className="font-bold text-lg">{msg.specialty}</div>
+                    <div className="text-slate-700 font-medium">{msg.doctor.name}</div>
                     <div className="text-sm text-slate-500 flex items-center gap-1 mt-1">
                       <MapPin size={16} /> {msg.doctor.distanceKm.toFixed(1)} km away
                     </div>
@@ -354,45 +409,53 @@ const Chatbot = ({ onBack, language }) => {
           </div>
         )}
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {messages.length <= 1 && (
-        <div className="px-4 pb-2">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="px-4 pb-3 max-w-4xl mx-auto w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {quickSymptoms.map((symptom, idx) => (
               <button 
                 key={idx}
                 onClick={() => {
                   sendMessage(symptom.label);
                 }}
-                className="bg-white border-2 border-slate-100 p-4 rounded-2xl flex items-center justify-center gap-2 text-slate-700 font-bold shadow-sm hover:border-teal-300 hover:bg-teal-50 active:scale-95 transition-all min-h-16"
+                className="bg-white border-2 border-slate-100 p-3 lg:p-3.5 rounded-2xl flex items-center justify-center gap-2 text-slate-700 font-bold shadow-sm hover:border-teal-300 hover:bg-teal-50 active:scale-95 transition-all text-sm lg:text-base cursor-pointer"
               >
-                <span className="text-2xl">{symptom.icon}</span>
-                {symptom.label}
+                <span className="text-xl">{symptom.icon}</span>
+                <span className="truncate">{symptom.label}</span>
               </button>
             ))}
           </div>
         </div>
       )}
 
-      <div className="p-4 bg-white border-t border-slate-100 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] sticky bottom-0">
-        <div className="flex gap-2 items-center bg-slate-100 rounded-full p-1 pl-4">
-          <input 
-            type="text" 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder={t.chat_placeholder}
-            className="flex-1 bg-transparent border-none py-4 text-lg outline-none placeholder:text-slate-400"
-            disabled={loading || doctorLoading}
-          />
-          <button 
-            onClick={() => sendMessage()} 
-            disabled={loading || doctorLoading || !input.trim()}
-            className="p-4 bg-teal-600 text-white rounded-full flex-shrink-0 disabled:bg-slate-300 disabled:cursor-not-allowed active:bg-teal-700 transition-colors"
-          >
-            <Send size={24} />
-          </button>
+      <div className="p-4 bg-white border-t border-slate-200 shadow-sm sticky bottom-0 z-10 shrink-0">
+        <div className="max-w-4xl mx-auto w-full">
+          <div className="flex gap-2 items-center bg-slate-100 rounded-full p-1.5 pl-5 border border-slate-200/80 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-100 transition-all">
+            <input 
+              ref={inputRef}
+              type="text" 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              placeholder={t.chat_placeholder}
+              className="flex-1 bg-transparent border-none py-3 text-base lg:text-lg outline-none placeholder:text-slate-400"
+            />
+            <button 
+              onClick={() => sendMessage()} 
+              disabled={loading || doctorLoading || !input.trim()}
+              className="p-3.5 lg:p-4 bg-teal-600 text-white rounded-full flex-shrink-0 disabled:bg-slate-300 disabled:cursor-not-allowed active:bg-teal-700 hover:bg-teal-700 transition-colors shadow-sm cursor-pointer"
+            >
+              <Send size={22} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

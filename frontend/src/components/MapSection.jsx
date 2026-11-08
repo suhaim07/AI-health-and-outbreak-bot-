@@ -81,10 +81,10 @@ const MapSection = ({ language }) => {
   };
 
   return (
-    <div className="p-4 bg-slate-50 flex flex-col h-full space-y-6 pb-12">
+    <div className="p-4 sm:p-6 lg:p-8 bg-slate-50 flex flex-col h-full space-y-6 pb-12">
       
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="h-56 bg-slate-200 relative w-full flex items-center justify-center">
+        <div className="h-64 lg:h-80 bg-slate-200 relative w-full flex items-center justify-center">
           {loading && !location ? (
             <div className="flex flex-col items-center text-slate-500">
               <Loader2 size={32} className="animate-spin mb-2" />
@@ -94,12 +94,12 @@ const MapSection = ({ language }) => {
             renderMapIframe()
           )}
         </div>
-        <div className="p-5 bg-teal-700 text-white">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+        <div className="p-5 lg:p-6 bg-teal-700 text-white">
+          <h2 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
             <MapPin size={28} />
             {t.nearby_facilities}
           </h2>
-          <p className="text-teal-100 mt-1 text-lg">{t.showing_closest}</p>
+          <p className="text-teal-100 mt-1 text-base lg:text-lg">{t.showing_closest}</p>
         </div>
       </div>
 
@@ -116,8 +116,9 @@ const MapSection = ({ language }) => {
           </div>
         )}
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!loading && hospitals.map((hospital, idx) => (
-          <div key={hospital.id || idx} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col gap-4 relative overflow-hidden">
+          <div key={hospital.id || idx} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between gap-4 relative overflow-hidden">
             {idx === 0 && (
               <div className="absolute top-0 right-0 bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-bl-2xl shadow-sm">
                 ★ {t.recommended}
@@ -138,26 +139,27 @@ const MapSection = ({ language }) => {
               </h3>
             </div>
             
-            <div className={`flex gap-3 mt-2 ${idx === 0 ? 'flex-col' : 'flex-row'}`}>
+            <div className={`flex gap-3 mt-2 ${idx === 0 ? 'flex-col sm:flex-row' : 'flex-row'}`}>
               <a 
                 href={getGoogleMapsUrl(hospital.lat, hospital.lon)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex-1 ${idx === 0 ? 'bg-teal-700 hover:bg-teal-800 text-white' : 'bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50'} py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-colors active:scale-95`}
+                className={`flex-1 ${idx === 0 ? 'bg-teal-700 hover:bg-teal-800 text-white' : 'bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50'} py-3.5 lg:py-4 rounded-2xl font-bold text-base lg:text-lg flex items-center justify-center gap-2 transition-colors active:scale-95`}
               >
                 <Navigation size={20} /> {t.get_directions}
               </a>
               {idx === 0 && (
                 <a 
                   href={`tel:${hospital.tags?.phone || '104'}`}
-                  className="w-full bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
+                  className="flex-1 bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 py-3.5 lg:py-4 rounded-2xl font-bold text-base lg:text-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
                 >
-                  <Phone size={22} /> {t.call_clinic}
+                  <Phone size={20} /> {t.call_clinic}
                 </a>
               )}
             </div>
           </div>
         ))}
+        </div>
       </div>
       
       {/* Emergency Contact */}

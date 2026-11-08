@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Bot, User, Cpu } from 'lucide-react';
 import axios from 'axios';
@@ -10,13 +10,21 @@ const ChatbotPanel = () => {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (loading || !input.trim()) return;
 
     const userMsg = input.trim();
     setMessages(prev => [...prev, { text: userMsg, sender: 'user' }]);
     setInput('');
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
     setLoading(true);
 
     try {
@@ -26,6 +34,9 @@ const ChatbotPanel = () => {
       setMessages(prev => [...prev, { text: "Connection error. Unable to reach AI core.", sender: 'bot' }]);
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
     }
   };
 
@@ -70,12 +81,17 @@ const ChatbotPanel = () => {
       <div className="p-4 border-t border-white/10 bg-[var(--color-dark-surface)]">
         <div className="flex gap-2 relative">
           <input 
+            ref={inputRef}
             type="text" 
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
             placeholder="Initialize query... (e.g. Fever and joint pain)"
-            disabled={loading}
             className="flex-1 bg-black/50 border border-white/20 rounded-full px-6 py-4 outline-none focus:border-[var(--color-neon-blue)] transition-colors text-white placeholder-gray-500"
           />
           <button 
